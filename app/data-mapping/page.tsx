@@ -12,8 +12,8 @@ import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Upload, FileText, Brain, CheckCircle, Edit, AlertTriangle, LinkIcon } from "lucide-react"
-import type { MappingRule, DataContract, FileUpload, ValidationResult } from "@/types/data-contract"
-import { DataContractEngine } from "@/lib/data-contract-engine"
+import type { MappingRule, DataContract, FileUpload, ValidationResult } from "../../types/data-contract"
+import { DataContractEngine } from "../../lib/data-contract-engine"
 
 export default function DataMappingPage() {
   const [currentStep, setCurrentStep] = useState(1)
