@@ -7,7 +7,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Hero Section */}
-      <section className="relative py-20 px-4">
+      <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl text-center">
           <div className="mb-8">
             <h1 className="text-5xl font-bold text-slate-900 mb-6">Intelligent Data Mapping & Transformation</h1>
@@ -140,7 +140,7 @@ export default function HomePage() {
                   <div className="p-2 bg-purple-100 rounded-lg">
                     <Database className="h-6 w-6 text-purple-700" />
                   </div>
-                  <CardTitle className="text-xl">Local Data Queue (LDQ)</CardTitle>
+                  <CardTitle className="text-xl">Data Queue (DQ)</CardTitle>
                 </div>
                 <CardDescription>Centralized file management with comprehensive metadata tracking</CardDescription>
               </CardHeader>

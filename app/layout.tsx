@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "EPI-USE Data Mapping & Transformation",
-  description: "AI-powered data integration platform for enterprise workflows",
+  description: "AI-powered data integration platform for intelligent mapping and transformation",
     generator: 'v0.dev'
 }
 
