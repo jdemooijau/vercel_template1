@@ -21,7 +21,9 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { FileText, Plus, Search, Edit, Eye, Download, CheckCircle, Info } from "lucide-react"
+import { FileText, Plus, Search, Edit, Eye, Download, CheckCircle, Info, Upload } from "lucide-react"
+import { FileUploadDialog } from "@/components/file-upload-dialog"
+import { ContractAssignmentDialog } from "@/components/contract-assignment-dialog"
 
 type DataContract = {
   id: string
@@ -33,6 +35,23 @@ type DataContract = {
   lastModified: string
   fieldCount: number
   usageCount: number
+  yamlContent?: string
+}
+
+type UploadStatus = "idle" | "uploading" | "processing" | "completed" | "error"
+
+type GeneratedContract = {
+  yaml: string
+  metadata: {
+    fileName: string
+    fileType: string
+    recordCount?: number
+    fieldCount: number
+    inferredSchema: any
+    quality?: any
+    warnings?: string[]
+    errors?: string[]
+  }
 }
 
 export default function ContractsPage() {
@@ -40,8 +59,13 @@ export default function ContractsPage() {
   const [filterStatus, setFilterStatus] = useState("all")
   const [selectedContract, setSelectedContract] = useState<DataContract | null>(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-
-  const contracts: DataContract[] = [
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
+  const [isAssignmentOpen, setIsAssignmentOpen] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle")
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadMessage, setUploadMessage] = useState("")
+  const [generatedContract, setGeneratedContract] = useState<GeneratedContract | null>(null)
+  const [contracts, setContracts] = useState<DataContract[]>([
     {
       id: "customer-data-v1",
       title: "Customer Data Contract",
@@ -52,6 +76,36 @@ export default function ContractsPage() {
       lastModified: "2024-01-15",
       fieldCount: 12,
       usageCount: 5,
+      yamlContent: `dataContractSpecification: 0.9.3
+id: customer-data-v1
+info:
+  title: Customer Data Contract
+  version: 1.0.0
+  description: Customer information from CRM system
+  owner: Data Team
+models:
+  customer:
+    type: table
+    description: Customer master data
+    fields:
+      id:
+        type: integer
+        required: true
+        unique: true
+        description: Unique customer identifier
+      email:
+        type: string
+        required: true
+        format: email
+        pii: true
+        classification: confidential
+        description: Customer email address
+      name:
+        type: string
+        required: true
+        pii: true
+        classification: confidential
+        description: Customer full name`,
     },
     {
       id: "product-catalog-v1",
@@ -86,7 +140,7 @@ export default function ContractsPage() {
       fieldCount: 8,
       usageCount: 1,
     },
-  ]
+  ])
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -111,6 +165,370 @@ export default function ContractsPage() {
     return matchesSearch && matchesStatus
   })
 
+  const handleFileUpload = async (file: File, processingLibrary: "frictionless" | "datacontract-cli") => {
+    setUploadStatus("uploading")
+    setUploadProgress(20)
+    setUploadMessage("Uploading file...")
+
+    try {
+      // Simulate file upload
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      setUploadStatus("processing")
+      setUploadProgress(50)
+      setUploadMessage(`Processing with ${processingLibrary}...`)
+
+      // Simulate processing with selected library
+      await new Promise((resolve) => setTimeout(resolve, 2500))
+
+      // Generate contract based on library choice
+      const result = await generateContractFromFile(file, processingLibrary)
+      setGeneratedContract(result)
+
+      setUploadStatus("completed")
+      setUploadProgress(100)
+      setUploadMessage("Data contract generated successfully!")
+    } catch (error) {
+      setUploadStatus("error")
+      setUploadMessage("Error processing file: " + (error as Error).message)
+    }
+  }
+
+  const generateContractFromFile = async (
+    file: File,
+    library: "frictionless" | "datacontract-cli",
+  ): Promise<GeneratedContract> => {
+    const fileName = file.name.split(".")[0]
+    const fileExtension = file.name.split(".").pop()?.toLowerCase()
+
+    if (library === "frictionless") {
+      return generateFrictionlessContract(file, fileName, fileExtension!)
+    } else {
+      return generateDataContractCliContract(file, fileName, fileExtension!)
+    }
+  }
+
+  const generateFrictionlessContract = async (
+    file: File,
+    fileName: string,
+    fileExtension: string,
+  ): Promise<GeneratedContract> => {
+    // Simulate frictionless-py analysis
+    const mockSchema = {
+      fields: [
+        { name: "id", type: "integer", constraints: { required: true, unique: true } },
+        { name: "name", type: "string", constraints: { required: true, maxLength: 100 } },
+        { name: "email", type: "string", format: "email", constraints: { required: true } },
+        { name: "age", type: "integer", constraints: { minimum: 0, maximum: 120 } },
+        { name: "created_at", type: "datetime", constraints: { required: true } },
+        { name: "is_active", type: "boolean", constraints: { required: true } },
+      ],
+      primaryKey: ["id"],
+      missingValues: ["", "NULL", "null", "N/A"],
+    }
+
+    const mockQuality = {
+      valid: true,
+      stats: {
+        rows: 1250,
+        fields: 6,
+        errors: 0,
+        warnings: 2,
+      },
+      fieldStats: {
+        completeness: 98.5,
+        uniqueness: 95.2,
+        validity: 99.1,
+      },
+    }
+
+    const warnings = [
+      "2 rows contain missing values in non-required fields",
+      "Email format validation passed for 99.8% of records",
+    ]
+
+    const yaml = `# Generated using frictionless-py data profiling
+# Source: ${file.name}
+# Generated: ${new Date().toISOString()}
+
+dataContractSpecification: 0.9.3
+id: ${fileName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-contract
+info:
+  title: ${fileName} Data Contract
+  version: 1.0.0
+  description: Auto-generated contract from ${fileExtension.toUpperCase()} using frictionless-py
+  owner: Data Team
+  contact:
+    name: Data Engineering Team
+    email: data-engineering@company.com
+  tags:
+    - frictionless-generated
+    - ${fileExtension}
+    - validated
+
+servers:
+  production:
+    type: ${fileExtension === "csv" ? "s3" : "bigquery"}
+    format: ${fileExtension}
+    description: Production data source
+    
+terms:
+  usage: |
+    This contract was generated using frictionless-py data profiling.
+    Schema validation and quality checks have been performed.
+  limitations: |
+    - Based on sample data analysis (${mockQuality.stats.rows} rows)
+    - Field constraints inferred from data patterns
+    - Manual review recommended for business rules
+
+models:
+  ${fileName.toLowerCase().replace(/[^a-z0-9]/g, "_")}:
+    type: table
+    description: ${fileName} data model (frictionless validated)
+    primaryKey: [${mockSchema.primaryKey.map((k) => `"${k}"`).join(", ")}]
+    fields:
+      id:
+        type: integer
+        required: true
+        unique: true
+        description: Primary key identifier
+        constraints:
+          minimum: 1
+      name:
+        type: string
+        required: true
+        description: Record name
+        constraints:
+          maxLength: 100
+          pattern: "^[A-Za-z\\s]+$"
+      email:
+        type: string
+        required: true
+        format: email
+        pii: true
+        classification: confidential
+        description: Email address
+        constraints:
+          pattern: "^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$"
+      age:
+        type: integer
+        required: false
+        description: Age in years
+        constraints:
+          minimum: 0
+          maximum: 120
+      created_at:
+        type: timestamp
+        required: true
+        description: Record creation timestamp
+        format: "YYYY-MM-DD HH:mm:ss"
+      is_active:
+        type: boolean
+        required: true
+        description: Active status flag
+        default: true
+
+quality:
+  # Frictionless validation results
+  completeness:
+    threshold: ${mockQuality.fieldStats.completeness}
+    description: Data completeness based on frictionless analysis
+  accuracy:
+    threshold: ${mockQuality.fieldStats.validity}
+    description: Data validity based on schema validation
+  uniqueness:
+    threshold: ${mockQuality.fieldStats.uniqueness}
+    description: Uniqueness constraints validation
+  freshness:
+    threshold: "24h"
+    description: Data freshness requirement
+  validation:
+    engine: "frictionless-py"
+    lastRun: "${new Date().toISOString()}"
+    results:
+      totalRows: ${mockQuality.stats.rows}
+      validRows: ${mockQuality.stats.rows - mockQuality.stats.errors}
+      errorCount: ${mockQuality.stats.errors}
+      warningCount: ${mockQuality.stats.warnings}
+
+serviceLevel:
+  availability: "99.9%"
+  retention: "7 years"
+  latency: "< 100ms"
+  support: "24x7"
+  backup: "daily"
+
+# Frictionless validation metadata
+metadata:
+  generator: "frictionless-py"
+  validation:
+    schema: "inferred"
+    dialect: "auto-detected"
+    encoding: "utf-8"
+  quality:
+    score: ${((mockQuality.fieldStats.completeness + mockQuality.fieldStats.validity + mockQuality.fieldStats.uniqueness) / 3).toFixed(1)}
+    issues: ${mockQuality.stats.warnings} warnings, ${mockQuality.stats.errors} errors`
+
+    return {
+      yaml,
+      metadata: {
+        fileName: file.name,
+        fileType: fileExtension,
+        recordCount: mockQuality.stats.rows,
+        fieldCount: mockSchema.fields.length,
+        inferredSchema: mockSchema,
+        quality: mockQuality,
+        warnings,
+        errors: [],
+      },
+    }
+  }
+
+  const generateDataContractCliContract = async (
+    file: File,
+    fileName: string,
+    fileExtension: string,
+  ): Promise<GeneratedContract> => {
+    // Simulate datacontract-cli processing
+    const warnings =
+      fileExtension === "csv"
+        ? [
+            "CSV headers used as field names - verify schema accuracy",
+            "Data types inferred from sample - manual review recommended",
+          ]
+        : ["Schema inferred from file structure", "Consider adding business validation rules"]
+
+    const yaml = `# Generated using datacontract-cli
+# Source: ${file.name}
+# Generated: ${new Date().toISOString()}
+
+dataContractSpecification: 0.9.3
+id: ${fileName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-contract
+info:
+  title: ${fileName} Data Contract
+  version: 1.0.0
+  description: Auto-generated contract from ${fileExtension.toUpperCase()} using datacontract-cli
+  owner: Data Team
+  contact:
+    name: Data Engineering Team
+    email: data-engineering@company.com
+  tags:
+    - datacontract-cli-generated
+    - ${fileExtension}
+
+servers:
+  production:
+    type: ${fileExtension === "csv" ? "s3" : fileExtension === "json" ? "kafka" : "bigquery"}
+    format: ${fileExtension}
+    description: Production data source
+
+models:
+  ${fileName.toLowerCase().replace(/[^a-z0-9]/g, "_")}:
+    type: ${fileExtension === "json" ? "object" : "table"}
+    description: ${fileName} data model
+    fields:
+      id:
+        type: string
+        required: true
+        unique: true
+        description: Unique identifier
+      timestamp:
+        type: timestamp
+        required: true
+        description: Record timestamp
+      data:
+        type: ${fileExtension === "json" ? "object" : "string"}
+        required: true
+        description: Main data field
+
+quality:
+  completeness:
+    threshold: 95
+    description: Data completeness requirement
+  freshness:
+    threshold: "24h"
+    description: Data freshness requirement
+
+serviceLevel:
+  availability: "99.5%"
+  retention: "5 years"
+  support: "8x5"`
+
+    return {
+      yaml,
+      metadata: {
+        fileName: file.name,
+        fileType: fileExtension,
+        fieldCount: 3,
+        inferredSchema: { basic: true },
+        warnings,
+        errors: [],
+      },
+    }
+  }
+
+  const handleContractAssignment = (assignmentType: "new" | "existing", contractData?: any) => {
+    if (!generatedContract) return
+
+    if (assignmentType === "new") {
+      // Create new contract
+      const newContract: DataContract = {
+        id: contractData.id,
+        title: contractData.title,
+        version: contractData.version,
+        description: contractData.description,
+        owner: contractData.owner,
+        status: "draft",
+        lastModified: new Date().toISOString().split("T")[0],
+        fieldCount: generatedContract.metadata.fieldCount,
+        usageCount: 0,
+        yamlContent: generatedContract.yaml,
+      }
+      setContracts([...contracts, newContract])
+      setSelectedContract(newContract)
+    } else {
+      // Update existing contract
+      const updatedContracts = contracts.map((contract) =>
+        contract.id === contractData.contractId
+          ? {
+              ...contract,
+              yamlContent: generatedContract.yaml,
+              fieldCount: generatedContract.metadata.fieldCount,
+              lastModified: new Date().toISOString().split("T")[0],
+              version: contractData.newVersion || contract.version,
+            }
+          : contract,
+      )
+      setContracts(updatedContracts)
+      const updatedContract = updatedContracts.find((c) => c.id === contractData.contractId)
+      if (updatedContract) setSelectedContract(updatedContract)
+    }
+
+    setIsAssignmentOpen(false)
+    setIsUploadOpen(false)
+    resetUpload()
+  }
+
+  const downloadYaml = () => {
+    if (!generatedContract) return
+    const blob = new Blob([generatedContract.yaml], { type: "text/yaml" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${generatedContract.metadata.fileName.split(".")[0]}-contract.yaml`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const resetUpload = () => {
+    setUploadStatus("idle")
+    setUploadProgress(0)
+    setUploadMessage("")
+    setGeneratedContract(null)
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="mb-8">
@@ -129,84 +547,115 @@ export default function ContractsPage() {
               </CardTitle>
               <CardDescription>Search, filter, and manage your data contracts</CardDescription>
             </div>
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-blue-900 hover:bg-blue-800">
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Contract
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Create New Data Contract</DialogTitle>
-                  <DialogDescription>
-                    Define a new data contract with field specifications and validation rules
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="contract-title">Contract Title</Label>
-                      <Input id="contract-title" placeholder="e.g., Customer Data Contract" />
+            <div className="flex gap-2">
+              <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" onClick={resetUpload}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Infer from File
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Generate Contract from Sample File</DialogTitle>
+                    <DialogDescription>
+                      Upload a sample data file to automatically generate a data contract using frictionless-py or
+                      datacontract-cli
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <FileUploadDialog
+                    onFileUpload={handleFileUpload}
+                    uploadStatus={uploadStatus}
+                    uploadProgress={uploadProgress}
+                    uploadMessage={uploadMessage}
+                    generatedContract={generatedContract}
+                    onDownloadYaml={downloadYaml}
+                    onReset={resetUpload}
+                    onAssignContract={() => setIsAssignmentOpen(true)}
+                  />
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-blue-900 hover:bg-blue-800">
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Contract
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Create New Data Contract</DialogTitle>
+                    <DialogDescription>
+                      Define a new data contract with field specifications and validation rules
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="contract-title">Contract Title</Label>
+                        <Input id="contract-title" placeholder="e.g., Customer Data Contract" />
+                      </div>
+                      <div>
+                        <Label htmlFor="contract-version">Version</Label>
+                        <Input id="contract-version" placeholder="1.0.0" />
+                      </div>
                     </div>
+
                     <div>
-                      <Label htmlFor="contract-version">Version</Label>
-                      <Input id="contract-version" placeholder="1.0.0" />
+                      <Label htmlFor="contract-description">Description</Label>
+                      <Textarea
+                        id="contract-description"
+                        placeholder="Describe the purpose and scope of this data contract"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="contract-owner">Owner</Label>
+                        <Input id="contract-owner" placeholder="Team or individual responsible" />
+                      </div>
+                      <div>
+                        <Label htmlFor="contract-status">Status</Label>
+                        <Select defaultValue="draft">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="deprecated">Deprecated</SelectItem>
+                            <SelectItem value="archived">Archived</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <Label>Contract Schema</Label>
+                      <Textarea
+                        placeholder="Define your data schema in JSON format..."
+                        rows={8}
+                        className="font-mono text-sm"
+                      />
+                    </div>
+
+                    <div className="flex gap-2 pt-4">
+                      <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="flex-1">
+                        Cancel
+                      </Button>
+                      <Button className="flex-1" onClick={() => setIsCreateOpen(false)}>
+                        Create Contract
+                      </Button>
                     </div>
                   </div>
-
-                  <div>
-                    <Label htmlFor="contract-description">Description</Label>
-                    <Textarea
-                      id="contract-description"
-                      placeholder="Describe the purpose and scope of this data contract"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="contract-owner">Owner</Label>
-                      <Input id="contract-owner" placeholder="Team or individual responsible" />
-                    </div>
-                    <div>
-                      <Label htmlFor="contract-status">Status</Label>
-                      <Select defaultValue="draft">
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="draft">Draft</SelectItem>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="deprecated">Deprecated</SelectItem>
-                          <SelectItem value="archived">Archived</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div>
-                    <Label>Contract Schema</Label>
-                    <Textarea
-                      placeholder="Define your data schema in JSON format..."
-                      rows={8}
-                      className="font-mono text-sm"
-                    />
-                  </div>
-
-                  <div className="flex gap-2 pt-4">
-                    <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="flex-1">
-                      Cancel
-                    </Button>
-                    <Button className="flex-1" onClick={() => setIsCreateOpen(false)}>
-                      Create Contract
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -350,8 +799,9 @@ export default function ContractsPage() {
                 <Separator />
 
                 <Tabs defaultValue="schema" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="schema">Schema</TabsTrigger>
+                    <TabsTrigger value="yaml">YAML</TabsTrigger>
                     <TabsTrigger value="quality">Quality</TabsTrigger>
                     <TabsTrigger value="usage">Usage</TabsTrigger>
                   </TabsList>
@@ -381,6 +831,35 @@ export default function ContractsPage() {
 }`}
                       </pre>
                     </ScrollArea>
+                  </TabsContent>
+
+                  <TabsContent value="yaml" className="mt-4">
+                    <ScrollArea className="h-48 w-full rounded border p-3">
+                      <pre className="text-xs whitespace-pre-wrap">
+                        {selectedContract.yamlContent || "No YAML content available"}
+                      </pre>
+                    </ScrollArea>
+                    {selectedContract.yamlContent && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-2"
+                        onClick={() => {
+                          const blob = new Blob([selectedContract.yamlContent!], { type: "text/yaml" })
+                          const url = URL.createObjectURL(blob)
+                          const a = document.createElement("a")
+                          a.href = url
+                          a.download = `${selectedContract.id}.yaml`
+                          document.body.appendChild(a)
+                          a.click()
+                          document.body.removeChild(a)
+                          URL.revokeObjectURL(url)
+                        }}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download YAML
+                      </Button>
+                    )}
                   </TabsContent>
 
                   <TabsContent value="quality" className="mt-4">
@@ -433,6 +912,15 @@ export default function ContractsPage() {
           )}
         </div>
       </div>
+
+      {/* Contract Assignment Dialog */}
+      <ContractAssignmentDialog
+        open={isAssignmentOpen}
+        onOpenChange={setIsAssignmentOpen}
+        generatedContract={generatedContract}
+        existingContracts={contracts}
+        onAssign={handleContractAssignment}
+      />
     </div>
   )
 }
