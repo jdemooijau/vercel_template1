@@ -197,16 +197,74 @@ export class FrictionlessService {
     file: File,
     validation: FrictionlessValidationResult,
     metadata: FrictionlessContractResult["metadata"],
+    businessMetadata?: any,
   ): string {
     const fileName = file.name.split(".")[0]
     const contractId = fileName.toLowerCase().replace(/[^a-z0-9]/g, "-") + "-contract"
     const timestamp = new Date().toISOString()
 
+    // Generate business sections if metadata is provided
+    const businessSections = businessMetadata
+      ? `
+# Business Context and Governance
+info:
+  title: ${fileName} Data Contract
+  version: 1.0.0
+  description: |
+    ${
+      businessMetadata.businessDefinitions
+        ? Object.entries(businessMetadata.businessDefinitions)
+            .map(([field, def]) => `${field}: ${def}`)
+            .join("\n    ")
+        : "Auto-generated data contract from frictionless-py analysis"
+    }
+  owner: ${businessMetadata.owner || "Data Engineering Team"}
+  contact:
+    name: ${businessMetadata.steward || "Data Engineering Team"}
+    email: data-engineering@company.com
+  domain: ${businessMetadata.domain || "general"}
+  classification: ${businessMetadata.classification || "internal"}
+  tags:
+    - frictionless-validated
+    - ${metadata?.fileType}
+    - ${businessMetadata.domain || "general"}
+    - ${businessMetadata.classification || "internal"}
+
+# Stakeholders and Governance
+stakeholders:${
+          businessMetadata.stakeholders
+            ?.map(
+              (s: any) => `
+  - name: ${s.name}
+    role: ${s.role}
+    contact: ${s.contact || "N/A"}`,
+            )
+            .join("") || ""
+        }
+
+governance:
+  dataOwner: ${businessMetadata.owner || "TBD"}
+  dataSteward: ${businessMetadata.steward || "TBD"}
+  retentionPeriod: ${businessMetadata.governance?.retentionPeriod || "TBD"}
+  accessLevel: ${businessMetadata.governance?.accessLevel || "restricted"}
+  complianceRequirements: [${businessMetadata.governance?.complianceRequirements?.map((req: string) => `"${req}"`).join(", ") || ""}]
+
+# Usage Policies
+terms:
+  usage: |
+    ${businessMetadata.usagePolicies?.join("\n    - ") || "Usage policies to be defined"}
+  limitations: |
+    - Data classification: ${businessMetadata.classification || "internal"}
+    - Access level: ${businessMetadata.governance?.accessLevel || "restricted"}
+    - Retention: ${businessMetadata.governance?.retentionPeriod || "TBD"}`
+      : ""
+
+    // Rest of the existing YAML generation...
     const fieldsYaml = validation.schema.fields
       .map((field) => {
         let fieldDef = `      ${field.name}:
         type: ${field.type}
-        description: ${field.name.replace(/_/g, " ")} field`
+        description: ${businessMetadata?.businessDefinitions?.[field.name] || field.name.replace(/_/g, " ")} field`
 
         if (field.constraints?.required) {
           fieldDef += `
@@ -267,125 +325,49 @@ export class FrictionlessService {
 
 dataContractSpecification: 0.9.3
 id: ${contractId}
-info:
-  title: ${fileName} Data Contract
-  version: 1.0.0
-  description: |
-    Auto-generated data contract from ${metadata?.fileType?.toUpperCase()} file using frictionless-py.
-    
-    Validation Results:
-    - Total rows: ${validation.stats.rows}
-    - Total fields: ${validation.stats.fields}
-    - Data quality score: ${((validation.fieldStats.completeness + validation.fieldStats.validity + validation.fieldStats.uniqueness) / 3).toFixed(1)}%
-    - Completeness: ${validation.fieldStats.completeness.toFixed(1)}%
-    - Validity: ${validation.fieldStats.validity.toFixed(1)}%
-    - Uniqueness: ${validation.fieldStats.uniqueness.toFixed(1)}%
-  owner: Data Engineering Team
-  contact:
-    name: Data Engineering Team
-    email: data-engineering@company.com
-  tags:
-    - frictionless-validated
-    - ${metadata?.fileType}
-    - auto-generated
-    - quality-checked
+${businessSections}
 
+# Technical Schema and Validation
 servers:
   production:
     type: ${metadata?.fileType === "csv" ? "s3" : metadata?.fileType === "parquet" ? "bigquery" : "kafka"}
     format: ${metadata?.fileType}
-    ${metadata?.fileType === "csv" ? `delimiter: "${metadata.delimiter}"` : ""}
-    ${metadata?.encoding ? `encoding: ${metadata.encoding}` : ""}
     description: Production data source validated with frictionless-py
-
-terms:
-  usage: |
-    This contract was generated using frictionless-py data profiling and validation.
-    
-    Data Quality Assessment:
-    - Schema validation: ${validation.valid ? "PASSED" : "FAILED"}
-    - Error count: ${validation.stats.errors}
-    - Warning count: ${validation.stats.warnings}
-    
-    Please review the generated schema and constraints for business accuracy.
-  limitations: |
-    - Schema inferred from sample data (${validation.stats.rows} rows)
-    - Constraints based on observed data patterns
-    - Business rules may require manual addition
-    - PII classification needs verification
 
 models:
   ${fileName.toLowerCase().replace(/[^a-z0-9]/g, "_")}:
     type: table
     description: |
       ${fileName} data model validated with frictionless-py
-      
-      Quality Metrics:
-      - Completeness: ${validation.fieldStats.completeness.toFixed(1)}%
-      - Data validity: ${validation.fieldStats.validity.toFixed(1)}%
-      - Uniqueness: ${validation.fieldStats.uniqueness.toFixed(1)}%
-    ${validation.schema.primaryKey ? `primaryKey: [${validation.schema.primaryKey.map((k) => `"${k}"`).join(", ")}]` : ""}
+      Business Domain: ${businessMetadata?.domain || "General"}
+      Data Classification: ${businessMetadata?.classification || "Internal"}
     fields:
 ${fieldsYaml}
 
+# Quality and Compliance
 quality:
-  # Frictionless-py validation results
   completeness:
     threshold: ${validation.fieldStats.completeness.toFixed(1)}
     description: Data completeness based on frictionless analysis
-    measurement: "percentage of non-null values"
   accuracy:
     threshold: ${validation.fieldStats.validity.toFixed(1)}
     description: Data validity based on schema constraints
-    measurement: "percentage of valid values"
-  uniqueness:
-    threshold: ${validation.fieldStats.uniqueness.toFixed(1)}
-    description: Uniqueness constraints validation
-    measurement: "percentage of unique values where required"
   freshness:
     threshold: "24h"
     description: Data freshness requirement
-  validation:
-    engine: "frictionless-py"
-    version: "5.0+"
-    lastRun: "${timestamp}"
-    results:
-      valid: ${validation.valid}
-      totalRows: ${validation.stats.rows}
-      totalFields: ${validation.stats.fields}
-      errorCount: ${validation.stats.errors}
-      warningCount: ${validation.stats.warnings}
-      qualityScore: ${((validation.fieldStats.completeness + validation.fieldStats.validity + validation.fieldStats.uniqueness) / 3).toFixed(1)}
 
+# Service Level and Compliance
 serviceLevel:
   availability: "99.9%"
-  retention: "7 years"
-  latency: "< 100ms"
+  retention: "${businessMetadata?.governance?.retentionPeriod || "7 years"}"
   support: "24x7"
-  backup: "daily"
+  dataClassification: "${businessMetadata?.classification || "internal"}"
 
-# Frictionless validation metadata
+# Generated metadata
 metadata:
   generator: "frictionless-py"
-  sourceFile:
-    name: "${file.name}"
-    size: ${file.size}
-    type: "${metadata?.fileType}"
-    encoding: "${metadata?.encoding}"
-    ${metadata?.hasHeaders ? `hasHeaders: ${metadata.hasHeaders}` : ""}
-    ${metadata?.delimiter ? `delimiter: "${metadata.delimiter}"` : ""}
-  validation:
-    schema: "inferred"
-    dialect: "auto-detected"
-    missingValues: [${validation.schema.missingValues?.map((v) => `"${v}"`).join(", ") || '""'}]
-  quality:
-    score: ${((validation.fieldStats.completeness + validation.fieldStats.validity + validation.fieldStats.uniqueness) / 3).toFixed(1)}
-    issues: "${validation.stats.warnings} warnings, ${validation.stats.errors} errors"
-    recommendations: |
-      ${validation.warnings.length > 0 ? validation.warnings.map((w) => `- ${w}`).join("\n      ") : "- No specific recommendations"}
-
-# Note: This contract was auto-generated using frictionless-py and should be reviewed by domain experts
-# Validation errors and warnings should be addressed before production use`
+  businessContext: ${businessMetadata ? "true" : "false"}
+  lastUpdated: "${timestamp}"`
   }
 
   async validateContract(yaml: string): Promise<{

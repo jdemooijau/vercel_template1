@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Dialog,
   DialogContent,
@@ -18,12 +17,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { FileText, Plus, Search, Edit, Eye, Download, CheckCircle, Info, Upload } from "lucide-react"
+import { FileText, Plus, Search, Edit, Eye, Download, Upload } from "lucide-react"
 import { FileUploadDialog } from "@/components/file-upload-dialog"
 import { ContractAssignmentDialog } from "@/components/contract-assignment-dialog"
+import { BusinessMetadataDialog } from "@/components/business-metadata-dialog"
+// Import the enhanced contract view
+import { EnhancedContractView } from "@/components/enhanced-contract-view"
 
 type DataContract = {
   id: string
@@ -51,6 +51,24 @@ type GeneratedContract = {
     quality?: any
     warnings?: string[]
     errors?: string[]
+  }
+  businessMetadata?: {
+    owner: string
+    steward: string
+    domain: string
+    classification: string
+    usagePolicies: string[]
+    businessDefinitions: Record<string, string>
+    stakeholders: Array<{
+      name: string
+      role: string
+      contact: string
+    }>
+    governance: {
+      retentionPeriod: string
+      accessLevel: string
+      complianceRequirements: string[]
+    }
   }
 }
 
@@ -142,6 +160,8 @@ models:
     },
   ])
 
+  const [isBusinessMetadataOpen, setIsBusinessMetadataOpen] = useState(false)
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -191,6 +211,15 @@ models:
     } catch (error) {
       setUploadStatus("error")
       setUploadMessage("Error processing file: " + (error as Error).message)
+    }
+  }
+
+  const handleBusinessMetadataUpdate = (businessMetadata: any) => {
+    if (generatedContract) {
+      setGeneratedContract({
+        ...generatedContract,
+        businessMetadata,
+      })
     }
   }
 
@@ -573,6 +602,7 @@ serviceLevel:
                     onDownloadYaml={downloadYaml}
                     onReset={resetUpload}
                     onAssignContract={() => setIsAssignmentOpen(true)}
+                    onAddBusinessContext={() => setIsBusinessMetadataOpen(true)}
                   />
                 </DialogContent>
               </Dialog>
@@ -752,154 +782,26 @@ serviceLevel:
         {/* Contract Details */}
         <div>
           {selectedContract ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Contract Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-lg">{selectedContract.title}</h3>
-                  <p className="text-sm text-slate-600 mb-2">Version {selectedContract.version}</p>
-                  {getStatusBadge(selectedContract.status)}
-                </div>
-
-                <Separator />
-
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-sm font-medium">Description</Label>
-                    <p className="text-sm text-slate-600">{selectedContract.description}</p>
-                  </div>
-
-                  <div>
-                    <Label className="text-sm font-medium">Owner</Label>
-                    <p className="text-sm text-slate-600">{selectedContract.owner}</p>
-                  </div>
-
-                  <div>
-                    <Label className="text-sm font-medium">Last Modified</Label>
-                    <p className="text-sm text-slate-600">{selectedContract.lastModified}</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium">Fields</Label>
-                      <p className="text-sm text-slate-600">{selectedContract.fieldCount}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">Usage</Label>
-                      <p className="text-sm text-slate-600">{selectedContract.usageCount} projects</p>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <Tabs defaultValue="schema" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="schema">Schema</TabsTrigger>
-                    <TabsTrigger value="yaml">YAML</TabsTrigger>
-                    <TabsTrigger value="quality">Quality</TabsTrigger>
-                    <TabsTrigger value="usage">Usage</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="schema" className="mt-4">
-                    <ScrollArea className="h-48 w-full rounded border p-3">
-                      <pre className="text-xs">
-                        {`{
-  "customer": {
-    "type": "table",
-    "fields": {
-      "id": {
-        "type": "integer",
-        "required": true
-      },
-      "email": {
-        "type": "string",
-        "format": "email",
-        "required": true
-      },
-      "name": {
-        "type": "string",
-        "required": true
-      }
-    }
-  }
-}`}
-                      </pre>
-                    </ScrollArea>
-                  </TabsContent>
-
-                  <TabsContent value="yaml" className="mt-4">
-                    <ScrollArea className="h-48 w-full rounded border p-3">
-                      <pre className="text-xs whitespace-pre-wrap">
-                        {selectedContract.yamlContent || "No YAML content available"}
-                      </pre>
-                    </ScrollArea>
-                    {selectedContract.yamlContent && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="mt-2"
-                        onClick={() => {
-                          const blob = new Blob([selectedContract.yamlContent!], { type: "text/yaml" })
-                          const url = URL.createObjectURL(blob)
-                          const a = document.createElement("a")
-                          a.href = url
-                          a.download = `${selectedContract.id}.yaml`
-                          document.body.appendChild(a)
-                          a.click()
-                          document.body.removeChild(a)
-                          URL.revokeObjectURL(url)
-                        }}
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        Download YAML
-                      </Button>
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="quality" className="mt-4">
-                    <div className="space-y-2">
-                      <Alert>
-                        <CheckCircle className="h-4 w-4" />
-                        <AlertDescription>Data quality score: 95%</AlertDescription>
-                      </Alert>
-                      <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertDescription>Last validation: 2 hours ago</AlertDescription>
-                      </Alert>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="usage" className="mt-4">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Customer Migration</span>
-                        <Badge variant="outline">Active</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Data Sync Project</span>
-                        <Badge variant="outline">Active</Badge>
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-
-                <div className="flex gap-2 pt-4">
-                  <Button size="sm" className="flex-1">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <EnhancedContractView
+              contract={selectedContract}
+              onEdit={() => {
+                // Handle edit action
+                console.log("Edit contract:", selectedContract.id)
+              }}
+              onDownload={() => {
+                if (selectedContract.yamlContent) {
+                  const blob = new Blob([selectedContract.yamlContent], { type: "text/yaml" })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement("a")
+                  a.href = url
+                  a.download = `${selectedContract.id}.yaml`
+                  document.body.appendChild(a)
+                  a.click()
+                  document.body.removeChild(a)
+                  URL.revokeObjectURL(url)
+                }
+              }}
+            />
           ) : (
             <Card>
               <CardContent className="flex items-center justify-center h-64">
@@ -920,6 +822,14 @@ serviceLevel:
         generatedContract={generatedContract}
         existingContracts={contracts}
         onAssign={handleContractAssignment}
+      />
+
+      {/* Business Metadata Dialog */}
+      <BusinessMetadataDialog
+        open={isBusinessMetadataOpen}
+        onOpenChange={setIsBusinessMetadataOpen}
+        generatedContract={generatedContract}
+        onSave={handleBusinessMetadataUpdate}
       />
     </div>
   )

@@ -24,6 +24,7 @@ import {
   Settings,
   Zap,
   BarChart3,
+  BookOpen,
 } from "lucide-react"
 
 type GeneratedContract = {
@@ -49,6 +50,7 @@ interface FileUploadDialogProps {
   onDownloadYaml: () => void
   onReset: () => void
   onAssignContract: () => void
+  onAddBusinessContext: () => void
 }
 
 export function FileUploadDialog({
@@ -60,6 +62,7 @@ export function FileUploadDialog({
   onDownloadYaml,
   onReset,
   onAssignContract,
+  onAddBusinessContext,
 }: FileUploadDialogProps) {
   const [dragActive, setDragActive] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -230,6 +233,10 @@ export function FileUploadDialog({
           <Button onClick={onDownloadYaml} variant="outline">
             <Download className="mr-2 h-4 w-4" />
             Download YAML
+          </Button>
+          <Button onClick={onAddBusinessContext} variant="outline">
+            <BookOpen className="mr-2 h-4 w-4" />
+            Add Business Context
           </Button>
           <Button onClick={onAssignContract} className="flex-1">
             <Settings className="mr-2 h-4 w-4" />
