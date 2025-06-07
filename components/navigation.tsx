@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Brain, FileIcon as FileTransfer, FolderOpen, Database, FileText } from "lucide-react"
+import { Menu, Brain, FileIcon as FileTransfer, FolderOpen, Database, FileText, Book } from "lucide-react"
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
@@ -15,6 +15,7 @@ export function Navigation() {
     { href: "/contracts", label: "Data Contracts", icon: FileText },
     { href: "/projects", label: "Projects", icon: FolderOpen },
     { href: "/ldq", label: "Data Queue", icon: Database },
+    { href: "/api-docs", label: "API Docs", icon: Book },
   ]
 
   return (

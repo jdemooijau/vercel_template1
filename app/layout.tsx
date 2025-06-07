@@ -2,13 +2,14 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { Navigation } from "@/components/navigation"
+import { MainLayout } from "@/components/main-layout"
+import { ApiInitializer } from "@/components/api-initializer"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "EPI-USE Data Mapping & Transformation",
-  description: "AI-powered data integration platform for intelligent mapping and transformation",
+  title: "EPI-USE Data Platform",
+  description: "Comprehensive data mapping, transformation, and quality management platform",
     generator: 'v0.dev'
 }
 
@@ -20,8 +21,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Navigation />
-        <main>{children}</main>
+        <MainLayout>{children}</MainLayout>
+        <ApiInitializer />
       </body>
     </html>
   )
