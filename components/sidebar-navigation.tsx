@@ -30,25 +30,13 @@ export function SidebarNavigation({ isCollapsed, onToggle }: SidebarNavigationPr
 
   const navigationItems = [
     {
-      title: "Core Features",
+      title: "Project Management",
       items: [
         {
-          href: "/dashboard",
-          label: "Conversion Dashboard",
-          icon: BarChart3,
-          description: "Monitor runs and analytics",
-        },
-        {
-          href: "/data-mapping",
-          label: "Data Mapping",
-          icon: Brain,
-          description: "AI-powered field mapping",
-        },
-        {
-          href: "/transform",
-          label: "Transform",
-          icon: FileTransfer,
-          description: "Data transformation engine",
+          href: "/projects",
+          label: "Projects",
+          icon: FolderOpen,
+          description: "Project organization",
         },
         {
           href: "/contracts",
@@ -62,10 +50,16 @@ export function SidebarNavigation({ isCollapsed, onToggle }: SidebarNavigationPr
       title: "Data Management",
       items: [
         {
-          href: "/projects",
-          label: "Projects",
-          icon: FolderOpen,
-          description: "Project organization",
+          href: "/data-mapping",
+          label: "Data Mapping",
+          icon: Brain,
+          description: "AI-powered field mapping",
+        },
+        {
+          href: "/transform",
+          label: "Transformation",
+          icon: FileTransfer,
+          description: "Data transformation engine",
         },
         {
           href: "/ldq",
@@ -76,8 +70,14 @@ export function SidebarNavigation({ isCollapsed, onToggle }: SidebarNavigationPr
       ],
     },
     {
-      title: "System",
+      title: "Process Management",
       items: [
+        {
+          href: "/dashboard",
+          label: "Conversion Dashboard",
+          icon: BarChart3,
+          description: "Monitor runs and analytics",
+        },
         {
           href: "/api-docs",
           label: "API Documentation",
