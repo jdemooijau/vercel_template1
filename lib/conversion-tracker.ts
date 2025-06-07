@@ -284,7 +284,9 @@ export class ConversionTracker {
 
   // Get summary statistics
   async getSummary(filter?: RunFilter): Promise<RunSummary> {
-    let query = supabase.from("conversion_runs").select("status, duration, totalFiles, successRate, errorCount")
+    let query = supabase
+      .from("conversion_runs")
+      .select("status, duration, totalFiles, processedSizeBytes, successRate, errorCount")
 
     // Apply same filters as getRuns
     if (filter) {
