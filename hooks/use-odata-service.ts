@@ -190,7 +190,7 @@ export function useQueueFiles(options: UseApiOptions = {}) {
   }, [options.autoRefresh, options.refreshInterval, fetchQueueFiles])
 
   return {
-    queueFiles,
+    files: queueFiles,
     loading,
     error,
     refetch: fetchQueueFiles,
@@ -259,7 +259,7 @@ export function useDataQuality(options: UseApiOptions = {}) {
   }, [options.autoRefresh, options.refreshInterval, fetchDataQuality])
 
   return {
-    dataQuality,
+    data: dataQuality,
     loading,
     error,
     refetch: fetchDataQuality,
