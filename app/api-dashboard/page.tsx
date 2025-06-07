@@ -54,7 +54,7 @@ export default function ApiDashboardPage() {
   })
 
   const {
-    queueFiles: files,
+    files,
     loading: filesLoading,
     error: filesError,
     refetch: refetchFiles,
