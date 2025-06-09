@@ -13,13 +13,13 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env
 
 export class ConversionTracker {
   // Create a new conversion run
-  async createRun(runData: Omit<ConversionRun, "id" | "createdAt" | "updatedAt">): Promise<ConversionRun> {
+  async createRun(runData: Omit<ConversionRun, "id" | "created_at" | "updated_at">): Promise<ConversionRun> {
     const { data, error } = await supabase
       .from("conversion_runs")
       .insert({
         ...runData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .select()
       .single()
@@ -37,7 +37,7 @@ export class ConversionTracker {
       .from("conversion_runs")
       .update({
         ...updates,
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .eq("id", runId)
       .select()
@@ -69,13 +69,13 @@ export class ConversionTracker {
   }
 
   // Add file to run
-  async addFile(fileData: Omit<ConversionFile, "id" | "createdAt" | "updatedAt">): Promise<ConversionFile> {
+  async addFile(fileData: Omit<ConversionFile, "id" | "created_at" | "updated_at">): Promise<ConversionFile> {
     const { data, error } = await supabase
       .from("conversion_files")
       .insert({
         ...fileData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .select()
       .single()
@@ -93,7 +93,7 @@ export class ConversionTracker {
       .from("conversion_files")
       .update({
         ...updates,
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .eq("id", fileId)
       .select()
@@ -107,12 +107,12 @@ export class ConversionTracker {
   }
 
   // Log an error
-  async logError(errorData: Omit<ConversionError, "id" | "createdAt">): Promise<ConversionError> {
+  async logError(errorData: Omit<ConversionError, "id" | "created_at">): Promise<ConversionError> {
     const { data, error } = await supabase
       .from("conversion_errors")
       .insert({
         ...errorData,
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       })
       .select()
       .single()
@@ -122,7 +122,7 @@ export class ConversionTracker {
     }
 
     // Update run error count
-    await this.incrementRunErrorCount(errorData.runId)
+    await this.incrementRunErrorCount(errorData.run_id)
 
     return data
   }
@@ -139,12 +139,12 @@ export class ConversionTracker {
   }
 
   // Save performance metrics
-  async saveMetrics(metricsData: Omit<ConversionMetrics, "createdAt">): Promise<ConversionMetrics> {
+  async saveMetrics(metricsData: Omit<ConversionMetrics, "created_at">): Promise<ConversionMetrics> {
     const { data, error } = await supabase
       .from("conversion_metrics")
       .insert({
         ...metricsData,
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       })
       .select()
       .single()
@@ -370,7 +370,7 @@ export class ConversionTracker {
           event: "INSERT",
           schema: "public",
           table: "conversion_logs",
-          filter: `runId=eq.${runId}`,
+          filter: `run_id=eq.${runId}`,
         },
         (payload) => callback(payload.new as ConversionLog),
       )

@@ -1,59 +1,59 @@
 // Conversion tracking types for database and UI
 export interface ConversionRun {
   id: string
-  projectId?: string
-  userId: string
-  runType: "manual" | "api" | "scheduled" | "batch"
+  project_id?: string
+  user_id: string
+  run_type: "manual" | "api" | "scheduled" | "batch"
   status: "queued" | "running" | "completed" | "failed" | "cancelled"
-  startedAt: string
-  completedAt?: string
+  started_at: string
+  completed_at?: string
   duration?: number // in milliseconds
 
   // Configuration
-  sourceFormat: string
-  targetFormat: string
-  conversionOptions: Record<string, any>
+  source_format: string
+  target_format: string
+  conversion_options: Record<string, any>
 
   // Metrics
-  totalFiles: number
-  processedFiles: number
-  failedFiles: number
-  totalSizeBytes: number
-  processedSizeBytes: number
+  total_files: number
+  processed_files: number
+  failed_files: number
+  total_size_bytes: number
+  processed_size_bytes: number
 
   // Results
-  successRate: number
-  errorCount: number
-  warningCount: number
+  success_rate: number
+  error_count: number
+  warning_count: number
 
   // Metadata
   metadata: Record<string, any>
   tags?: string[]
 
-  createdAt: string
-  updatedAt: string
+  created_at: string
+  updated_at: string
 }
 
 export interface ConversionFile {
   id: string
-  runId: string
-  fileType: "input" | "output" | "intermediate" | "log"
+  run_id: string
+  file_type: "input" | "output" | "intermediate" | "log"
   filename: string
-  originalName: string
-  filePath: string
-  mimeType: string
-  sizeBytes: number
+  original_name: string
+  file_path: string
+  mime_type: string
+  size_bytes: number
   checksum?: string
 
   // Processing info
   status: "pending" | "processing" | "completed" | "failed" | "skipped"
-  processedAt?: string
-  processingDuration?: number
+  processed_at?: string
+  processing_duration?: number
 
   // File metadata
   schema?: Record<string, any>
-  rowCount?: number
-  columnCount?: number
+  row_count?: number
+  column_count?: number
   quality?: {
     score: number
     issues: Array<{
@@ -64,42 +64,42 @@ export interface ConversionFile {
     }>
   }
 
-  createdAt: string
-  updatedAt: string
+  created_at: string
+  updated_at: string
 }
 
 export interface ConversionError {
   id: string
-  runId: string
-  fileId?: string
-  errorType: "validation" | "transformation" | "system" | "network" | "timeout" | "memory"
+  run_id: string
+  file_id?: string
+  error_type: "validation" | "transformation" | "system" | "network" | "timeout" | "memory"
   severity: "critical" | "error" | "warning" | "info"
 
   // Error details
-  errorCode: string
+  error_code: string
   message: string
-  stackTrace?: string
+  stack_trace?: string
   context?: Record<string, any>
 
   // Location info
   step?: string
-  lineNumber?: number
-  columnNumber?: number
-  fieldName?: string
+  line_number?: number
+  column_number?: number
+  field_name?: string
 
   // Resolution
-  isResolved: boolean
+  is_resolved: boolean
   resolution?: string
-  resolvedAt?: string
-  resolvedBy?: string
+  resolved_at?: string
+  resolved_by?: string
 
-  createdAt: string
+  created_at: string
 }
 
 export interface ConversionLog {
   id: string
-  runId: string
-  fileId?: string
+  run_id: string
+  file_id?: string
   level: "debug" | "info" | "warn" | "error" | "fatal"
   category: "system" | "validation" | "transformation" | "performance" | "user"
 
@@ -108,40 +108,40 @@ export interface ConversionLog {
   timestamp: string
 
   // Performance metrics
-  memoryUsage?: number
-  cpuUsage?: number
+  memory_usage?: number
+  cpu_usage?: number
   duration?: number
 
   // Context
   step?: string
   component?: string
-  userId?: string
+  user_id?: string
 }
 
 export interface ConversionMetrics {
-  runId: string
+  run_id: string
 
   // Performance metrics
-  totalDuration: number
-  avgFileProcessingTime: number
-  peakMemoryUsage: number
-  avgCpuUsage: number
+  total_duration: number
+  avg_file_processing_time: number
+  peak_memory_usage: number
+  avg_cpu_usage: number
 
   // Throughput metrics
-  filesPerSecond: number
-  bytesPerSecond: number
-  rowsPerSecond?: number
+  files_per_second: number
+  bytes_per_second: number
+  rows_per_second?: number
 
   // Quality metrics
-  dataQualityScore: number
-  validationErrors: number
-  transformationWarnings: number
+  data_quality_score: number
+  validation_errors: number
+  transformation_warnings: number
 
   // Resource usage
-  diskSpaceUsed: number
-  networkBytesTransferred: number
+  disk_space_used: number
+  network_bytes_transferred: number
 
-  createdAt: string
+  created_at: string
 }
 
 // Dashboard filter and search types
@@ -177,18 +177,18 @@ export interface Database {
     Tables: {
       conversion_runs: {
         Row: ConversionRun
-        Insert: Omit<ConversionRun, "id" | "createdAt" | "updatedAt">
-        Update: Partial<Omit<ConversionRun, "id" | "createdAt">>
+        Insert: Omit<ConversionRun, "id" | "created_at" | "updated_at">
+        Update: Partial<Omit<ConversionRun, "id" | "created_at">>
       }
       conversion_files: {
         Row: ConversionFile
-        Insert: Omit<ConversionFile, "id" | "createdAt" | "updatedAt">
-        Update: Partial<Omit<ConversionFile, "id" | "createdAt">>
+        Insert: Omit<ConversionFile, "id" | "created_at" | "updated_at">
+        Update: Partial<Omit<ConversionFile, "id" | "created_at">>
       }
       conversion_errors: {
         Row: ConversionError
-        Insert: Omit<ConversionError, "id" | "createdAt">
-        Update: Partial<Omit<ConversionError, "id" | "createdAt">>
+        Insert: Omit<ConversionError, "id" | "created_at">
+        Update: Partial<Omit<ConversionError, "id" | "created_at">>
       }
       conversion_logs: {
         Row: ConversionLog
@@ -197,7 +197,7 @@ export interface Database {
       }
       conversion_metrics: {
         Row: ConversionMetrics
-        Insert: Omit<ConversionMetrics, "createdAt">
+        Insert: Omit<ConversionMetrics, "created_at">
         Update: Partial<ConversionMetrics>
       }
     }
