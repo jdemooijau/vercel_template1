@@ -44,26 +44,6 @@ export default function HomePage() {
               </Link>
             </Button>
           </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            <div className="text-center p-4 bg-white/50 rounded-lg backdrop-blur-sm">
-              <div className="text-2xl font-bold text-blue-900 mb-1">70-80%</div>
-              <div className="text-sm text-slate-600">Time Reduction</div>
-            </div>
-            <div className="text-center p-4 bg-white/50 rounded-lg backdrop-blur-sm">
-              <div className="text-2xl font-bold text-blue-900 mb-1">99.8%</div>
-              <div className="text-sm text-slate-600">Accuracy Rate</div>
-            </div>
-            <div className="text-center p-4 bg-white/50 rounded-lg backdrop-blur-sm">
-              <div className="text-2xl font-bold text-blue-900 mb-1">1000+</div>
-              <div className="text-sm text-slate-600">Files/Hour</div>
-            </div>
-            <div className="text-center p-4 bg-white/50 rounded-lg backdrop-blur-sm">
-              <div className="text-2xl font-bold text-blue-900 mb-1">24/7</div>
-              <div className="text-sm text-slate-600">Monitoring</div>
-            </div>
-          </div>
         </div>
       </section>
 

@@ -58,11 +58,11 @@ export class ConversionTracker {
   ): Promise<ConversionRun> {
     const completedAt = new Date().toISOString()
     const run = await this.getRun(runId)
-    const duration = new Date(completedAt).getTime() - new Date(run.startedAt).getTime()
+    const duration = new Date(completedAt).getTime() - new Date(run.started_at).getTime()
 
     return this.updateRun(runId, {
       status,
-      completedAt,
+      completed_at: completedAt,
       duration,
       ...finalMetrics,
     })
@@ -172,7 +172,7 @@ export class ConversionTracker {
     let query = supabase
       .from("conversion_runs")
       .select("*", { count: "exact" })
-      .order("startedAt", { ascending: false })
+      .order("started_at", { ascending: false })
 
     // Apply filters
     if (filter) {
@@ -180,22 +180,22 @@ export class ConversionTracker {
         query = query.in("status", filter.status)
       }
       if (filter.runType?.length) {
-        query = query.in("runType", filter.runType)
+        query = query.in("run_type", filter.runType)
       }
       if (filter.userId) {
-        query = query.eq("userId", filter.userId)
+        query = query.eq("user_id", filter.userId)
       }
       if (filter.projectId) {
-        query = query.eq("projectId", filter.projectId)
+        query = query.eq("project_id", filter.projectId)
       }
       if (filter.dateRange) {
-        query = query.gte("startedAt", filter.dateRange.start).lte("startedAt", filter.dateRange.end)
+        query = query.gte("started_at", filter.dateRange.start).lte("started_at", filter.dateRange.end)
       }
       if (filter.hasErrors !== undefined) {
         if (filter.hasErrors) {
-          query = query.gt("errorCount", 0)
+          query = query.gt("error_count", 0)
         } else {
-          query = query.eq("errorCount", 0)
+          query = query.eq("error_count", 0)
         }
       }
       if (filter.minDuration) {
@@ -223,8 +223,8 @@ export class ConversionTracker {
     const { data, error } = await supabase
       .from("conversion_files")
       .select("*")
-      .eq("runId", runId)
-      .order("createdAt", { ascending: true })
+      .eq("run_id", runId)
+      .order("created_at", { ascending: true })
 
     if (error) {
       throw new Error(`Failed to get run files: ${error.message}`)
@@ -238,8 +238,8 @@ export class ConversionTracker {
     const { data, error } = await supabase
       .from("conversion_errors")
       .select("*")
-      .eq("runId", runId)
-      .order("createdAt", { ascending: false })
+      .eq("run_id", runId)
+      .order("created_at", { ascending: false })
 
     if (error) {
       throw new Error(`Failed to get run errors: ${error.message}`)
@@ -253,7 +253,7 @@ export class ConversionTracker {
     let query = supabase
       .from("conversion_logs")
       .select("*")
-      .eq("runId", runId)
+      .eq("run_id", runId)
       .order("timestamp", { ascending: false })
       .limit(limit)
 
@@ -272,7 +272,7 @@ export class ConversionTracker {
 
   // Get metrics for a run
   async getRunMetrics(runId: string): Promise<ConversionMetrics | null> {
-    const { data, error } = await supabase.from("conversion_metrics").select("*").eq("runId", runId).single()
+    const { data, error } = await supabase.from("conversion_metrics").select("*").eq("run_id", runId).single()
 
     if (error && error.code !== "PGRST116") {
       // Not found error
@@ -286,7 +286,7 @@ export class ConversionTracker {
   async getSummary(filter?: RunFilter): Promise<RunSummary> {
     let query = supabase
       .from("conversion_runs")
-      .select("status, duration, totalFiles, processedSizeBytes, successRate, errorCount")
+      .select("status, duration, total_files, processed_size_bytes, success_rate, error_count")
 
     // Apply same filters as getRuns
     if (filter) {
@@ -294,16 +294,16 @@ export class ConversionTracker {
         query = query.in("status", filter.status)
       }
       if (filter.runType?.length) {
-        query = query.in("runType", filter.runType)
+        query = query.in("run_type", filter.runType)
       }
       if (filter.userId) {
-        query = query.eq("userId", filter.userId)
+        query = query.eq("user_id", filter.userId)
       }
       if (filter.projectId) {
-        query = query.eq("projectId", filter.projectId)
+        query = query.eq("project_id", filter.projectId)
       }
       if (filter.dateRange) {
-        query = query.gte("startedAt", filter.dateRange.start).lte("startedAt", filter.dateRange.end)
+        query = query.gte("started_at", filter.dateRange.start).lte("started_at", filter.dateRange.end)
       }
     }
 
@@ -318,10 +318,10 @@ export class ConversionTracker {
     const successfulRuns = runs.filter((r) => r.status === "completed").length
     const failedRuns = runs.filter((r) => r.status === "failed").length
     const avgDuration = runs.reduce((sum, r) => sum + (r.duration || 0), 0) / totalRuns || 0
-    const totalFilesProcessed = runs.reduce((sum, r) => sum + r.totalFiles, 0)
-    const totalDataProcessed = runs.reduce((sum, r) => sum + (r.processedSizeBytes || 0), 0)
+    const totalFilesProcessed = runs.reduce((sum, r) => sum + r.total_files, 0)
+    const totalDataProcessed = runs.reduce((sum, r) => sum + (r.processed_size_bytes || 0), 0)
     const errorRate = totalRuns > 0 ? failedRuns / totalRuns : 0
-    const avgSuccessRate = runs.reduce((sum, r) => sum + r.successRate, 0) / totalRuns || 0
+    const avgSuccessRate = runs.reduce((sum, r) => sum + r.success_rate, 0) / totalRuns || 0
 
     return {
       totalRuns,
