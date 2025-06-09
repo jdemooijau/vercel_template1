@@ -9,7 +9,7 @@ export interface ApiError {
   code: string
   message: string
   details?: string
-  timestamp: string
+  createdAt: string
 }
 
 export interface AuthConfig {
@@ -599,7 +599,7 @@ export class ApiError extends Error {
     public code: string,
     message: string,
     public details?: string,
-    public timestamp?: string,
+    public createdAt?: string,
   ) {
     super(message)
     this.name = "ApiError"
