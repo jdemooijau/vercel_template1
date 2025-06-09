@@ -769,34 +769,6 @@ export default function ApiDocsPage() {
         <p className="text-lg text-slate-600 mb-6">
           Complete reference for the EPI-USE Data Platform API with examples, authentication, and best practices.
         </p>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">{apiEndpoints.length}</div>
-              <div className="text-sm text-slate-600">Total Endpoints</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">7</div>
-              <div className="text-sm text-slate-600">Core Operations</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-purple-600">OAuth 2.0</div>
-              <div className="text-sm text-slate-600">Authentication</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-orange-600">OData</div>
-              <div className="text-sm text-slate-600">Compliant</div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
 
       <Tabs defaultValue="endpoints" className="space-y-6">
