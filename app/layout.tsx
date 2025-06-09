@@ -8,7 +8,7 @@ import { ApiInitializer } from "@/components/api-initializer"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "EPI-USE Data Platform",
+  title: "Cohenix Data Platform",
   description: "Comprehensive data mapping, transformation, and quality management platform",
     generator: 'v0.dev'
 }

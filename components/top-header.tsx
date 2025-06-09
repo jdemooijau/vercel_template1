@@ -31,7 +31,7 @@ export function TopHeader({ onMenuToggle, isMenuCollapsed }: TopHeaderProps) {
   // Mock user data
   const user = {
     name: "John Doe",
-    email: "john.doe@epi-use.com",
+    email: "john.doe@cohenix.com",
     role: "Data Engineer",
     avatar: "/placeholder.svg?height=32&width=32&text=JD",
     initials: "JD",

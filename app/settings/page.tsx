@@ -41,7 +41,7 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="system-name">System Name</Label>
-                  <Input id="system-name" defaultValue="EPI-USE Data Platform" />
+                  <Input id="system-name" defaultValue="Cohenix Data Platform" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="system-version">Version</Label>

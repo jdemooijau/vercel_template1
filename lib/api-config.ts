@@ -17,7 +17,7 @@ export const getApiConfig = (): ApiConfig => {
   const configs: Record<string, ApiConfig> = {
     development: {
       name: "Development",
-      baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "https://dev-api.epi-use.com",
+      baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "https://dev-api.cohenix.com",
       clientId: process.env.NEXT_PUBLIC_DEV_CLIENT_ID || "",
       clientSecret: process.env.DEV_CLIENT_SECRET,
       tenantId: process.env.DEV_TENANT_ID,
@@ -28,7 +28,7 @@ export const getApiConfig = (): ApiConfig => {
     },
     staging: {
       name: "Staging",
-      baseUrl: process.env.NEXT_PUBLIC_STAGING_BASE_URL || "https://staging-api.epi-use.com",
+      baseUrl: process.env.NEXT_PUBLIC_STAGING_BASE_URL || "https://staging-api.cohenix.com",
       clientId: process.env.NEXT_PUBLIC_STAGING_CLIENT_ID || "",
       clientSecret: process.env.STAGING_CLIENT_SECRET,
       tenantId: process.env.STAGING_TENANT_ID,
@@ -39,7 +39,7 @@ export const getApiConfig = (): ApiConfig => {
     },
     production: {
       name: "Production",
-      baseUrl: process.env.NEXT_PUBLIC_PROD_BASE_URL || "https://api.epi-use.com",
+      baseUrl: process.env.NEXT_PUBLIC_PROD_BASE_URL || "https://api.cohenix.com",
       clientId: process.env.NEXT_PUBLIC_PROD_CLIENT_ID || "",
       clientSecret: process.env.PROD_CLIENT_SECRET,
       tenantId: process.env.PROD_TENANT_ID,
@@ -68,7 +68,7 @@ export const getApiConfig = (): ApiConfig => {
 // Demo configuration for development without env vars
 export const getDemoConfig = (): ApiConfig => ({
   name: "Demo",
-  baseUrl: "https://demo-api.epi-use.com",
+  baseUrl: "https://demo-api.cohenix.com",
   clientId: "demo-client-id",
   clientSecret: "demo-secret",
   tenantId: "demo-tenant",
