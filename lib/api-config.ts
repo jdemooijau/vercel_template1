@@ -19,8 +19,7 @@ export const getApiConfig = (): ApiConfig => {
       name: "Development",
       baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "https://dev-api.epi-use.com",
       clientId: process.env.NEXT_PUBLIC_DEV_CLIENT_ID || "",
-      clientSecret: process.env.DEV_CLIENT_SECRET,
-      tenantId: process.env.DEV_TENANT_ID,
+      // Server-side only values - don't access on client
       scope: "api://data-platform-dev/.default",
       timeout: 30000,
       retryAttempts: 3,
@@ -30,8 +29,6 @@ export const getApiConfig = (): ApiConfig => {
       name: "Staging",
       baseUrl: process.env.NEXT_PUBLIC_STAGING_BASE_URL || "https://staging-api.epi-use.com",
       clientId: process.env.NEXT_PUBLIC_STAGING_CLIENT_ID || "",
-      clientSecret: process.env.STAGING_CLIENT_SECRET,
-      tenantId: process.env.STAGING_TENANT_ID,
       scope: "api://data-platform-staging/.default",
       timeout: 30000,
       retryAttempts: 3,
@@ -41,8 +38,6 @@ export const getApiConfig = (): ApiConfig => {
       name: "Production",
       baseUrl: process.env.NEXT_PUBLIC_PROD_BASE_URL || "https://api.epi-use.com",
       clientId: process.env.NEXT_PUBLIC_PROD_CLIENT_ID || "",
-      clientSecret: process.env.PROD_CLIENT_SECRET,
-      tenantId: process.env.PROD_TENANT_ID,
       scope: "api://data-platform/.default",
       timeout: 60000,
       retryAttempts: 5,
@@ -55,14 +50,41 @@ export const getApiConfig = (): ApiConfig => {
     throw new Error(`Invalid API environment: ${environment}. Valid options: ${Object.keys(configs).join(", ")}`)
   }
 
-  // Only validate required configuration in production
-  if (process.env.NODE_ENV === "production" && !config.clientId) {
-    throw new Error(
-      `Missing client ID for environment: ${environment}. Please set NEXT_PUBLIC_${environment.toUpperCase()}_CLIENT_ID`,
-    )
+  return config
+}
+
+// Server-side only configuration - use this in API routes and server components
+export const getServerApiConfig = (): ApiConfig => {
+  // Only access server-side environment variables here
+  if (typeof window !== "undefined") {
+    throw new Error("getServerApiConfig can only be called on the server side")
   }
 
-  return config
+  const environment = process.env.NEXT_PUBLIC_API_ENVIRONMENT || "development"
+  const baseConfig = getApiConfig()
+
+  // Add server-side secrets
+  const serverSecrets = {
+    development: {
+      clientSecret: process.env.DEV_CLIENT_SECRET,
+      tenantId: process.env.DEV_TENANT_ID,
+    },
+    staging: {
+      clientSecret: process.env.STAGING_CLIENT_SECRET,
+      tenantId: process.env.STAGING_TENANT_ID,
+    },
+    production: {
+      clientSecret: process.env.PROD_CLIENT_SECRET,
+      tenantId: process.env.PROD_TENANT_ID,
+    },
+  }
+
+  const secrets = serverSecrets[environment as keyof typeof serverSecrets] || {}
+
+  return {
+    ...baseConfig,
+    ...secrets,
+  }
 }
 
 // Demo configuration for development without env vars
@@ -70,8 +92,6 @@ export const getDemoConfig = (): ApiConfig => ({
   name: "Demo",
   baseUrl: "https://demo-api.epi-use.com",
   clientId: "demo-client-id",
-  clientSecret: "demo-secret",
-  tenantId: "demo-tenant",
   scope: "api://data-platform-demo/.default",
   timeout: 30000,
   retryAttempts: 3,
@@ -177,8 +197,28 @@ export const API_ENDPOINTS = {
   },
 }
 
-// Environment validation helper
+// Environment validation helper - server-side only
 export const validateEnvironment = (): { isValid: boolean; errors: string[] } => {
+  if (typeof window !== "undefined") {
+    // Client-side validation - only check public vars
+    const errors: string[] = []
+    const environment = process.env.NEXT_PUBLIC_API_ENVIRONMENT || "development"
+
+    const requiredPublicVars = ["NEXT_PUBLIC_API_ENVIRONMENT", `NEXT_PUBLIC_${environment.toUpperCase()}_CLIENT_ID`]
+
+    requiredPublicVars.forEach((varName) => {
+      if (!process.env[varName]) {
+        errors.push(`Missing required public environment variable: ${varName}`)
+      }
+    })
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    }
+  }
+
+  // Server-side validation
   const errors: string[] = []
   const environment = process.env.NEXT_PUBLIC_API_ENVIRONMENT || "development"
 
