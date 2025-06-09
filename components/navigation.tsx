@@ -1,0 +1,78 @@
+"use client"
+
+import { useState } from "react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Menu, Brain, FileIcon as FileTransfer, FolderOpen, Database, FileText, Book } from "lucide-react"
+
+export function Navigation() {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const navItems = [
+    { href: "/data-mapping", label: "Data Mapping", icon: Brain },
+    { href: "/transform", label: "Transform", icon: FileTransfer },
+    { href: "/contracts", label: "Data Contracts", icon: FileText },
+    { href: "/projects", label: "Projects", icon: FolderOpen },
+    { href: "/ldq", label: "Data Queue", icon: Database },
+    { href: "/api-docs", label: "API Docs", icon: Book },
+  ]
+
+  return (
+    <header className="border-b bg-white">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo and Brand */}
+          <Link href="/" className="flex items-center space-x-2">
+            <div className="text-2xl font-bold text-blue-900">EPI-USE</div>
+            <div className="text-sm text-slate-600">Data Platform</div>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-6">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center space-x-2 text-slate-600 hover:text-blue-900 transition-colors"
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </Link>
+              )
+            })}
+          </nav>
+
+          {/* Mobile Navigation */}
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-64">
+              <div className="flex flex-col space-y-4 mt-8">
+                {navItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="flex items-center space-x-3 text-slate-600 hover:text-blue-900 transition-colors p-2 rounded-lg hover:bg-slate-100"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.label}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </header>
+  )
+}
