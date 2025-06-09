@@ -9,7 +9,6 @@ export interface ApiError {
   code: string
   message: string
   details?: string
-  createdAt: string
 }
 
 export interface AuthConfig {
@@ -155,7 +154,6 @@ class ODataService {
           errorData.code || response.status.toString(),
           errorData.message || response.statusText,
           errorData.details,
-          new Date().toISOString(),
         )
       }
 
@@ -164,12 +162,7 @@ class ODataService {
       if (error instanceof ApiError) {
         throw error
       }
-      throw new ApiError(
-        "NETWORK_ERROR",
-        `Network request failed: ${(error as Error).message}`,
-        undefined,
-        new Date().toISOString(),
-      )
+      throw new ApiError("NETWORK_ERROR", `Network request failed: ${(error as Error).message}`)
     }
   }
 
@@ -599,7 +592,6 @@ export class ApiError extends Error {
     public code: string,
     message: string,
     public details?: string,
-    public createdAt?: string,
   ) {
     super(message)
     this.name = "ApiError"
@@ -659,11 +651,6 @@ export const ODataUtils = {
       return error
     }
 
-    return new ApiError(
-      "UNKNOWN_ERROR",
-      error.message || "An unknown error occurred",
-      error.stack,
-      new Date().toISOString(),
-    )
+    return new ApiError("UNKNOWN_ERROR", error.message || "An unknown error occurred", error.stack)
   },
 }
